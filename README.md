@@ -1,7 +1,7 @@
 
 ## Gunner Heat PC Soviet Guards Regiment Mod
 
-### Version 1.2, 10th April 2026  
+### Version 1.3, 6th April 2026  
 
 ![T-80B's on the march](https://i.imgur.com/tTsuTcz.jpeg)
  
