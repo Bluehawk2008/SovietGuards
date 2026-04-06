@@ -35,7 +35,7 @@ would never have come to fruition. I owe them, and the geniuses behind the Unity
 **Changelog**  
 1.0 - Base release  
 1.1 - T64B1 added  
-1.2 - T64R and BRDM2 added; configuration options added
-1.3 - Refactored code, no significant change to user experience
+1.2 - T64R and BRDM2 added; configuration options added  
+1.3 - Refactored code, no significant change to user experience  
 
 ![Motor-Rifle Section dismounting from a BMP-1](https://i.imgur.com/b3hF4Q3.jpeg)
