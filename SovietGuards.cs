@@ -17,6 +17,7 @@ namespace SovietGuards{
             enabled = false;
         }
     }
+    
     public class SovietGuardsClass : MelonMod
     {
         public static GameObject gameManager;
@@ -78,32 +79,34 @@ namespace SovietGuards{
             filter.mesh.RecalculateNormals();
             render.material = mat;
         }
+        
         public void MenuProps()
         {
             //Since there is no unitspawner on the main menu scenes, we need to load in our dummy BMP the hard way
-            
-            UnitPrefabLookupScriptable lookup = Resources.FindObjectsOfTypeAll<UnitPrefabLookupScriptable>()[0];
-            UnitPrefabLookupScriptable.UnitPrefabMetadata[] all_prefabs = lookup.AllUnits;
+            if (guards_mat == null) 
+            {
+                UnitPrefabLookupScriptable lookup = Resources.FindObjectsOfTypeAll<UnitPrefabLookupScriptable>()[0];
+                UnitPrefabLookupScriptable.UnitPrefabMetadata[] all_prefabs = lookup.AllUnits;
 
-            foreach (var unit in all_prefabs)
-            {
-                if (unit.FriendlyName != "BMP-2") { continue; }
-                unit.PrefabReference.LoadAssetAsync<GameObject>().WaitForCompletion();
-                if (!mute_logging.Value) { MelonLogger.Msg("BMP-2 prefab loaded"); }
-            }
-            
-            var list = Resources.FindObjectsOfTypeAll<Vehicle>();
-            foreach (var vic in list)
-            {
-                if (vic.name == "BMP2 Soviet")
+                foreach (var unit in all_prefabs)
                 {
-                    MeshRenderer gvards_mr = vic.transform.Find("BMP2_markings_sa/GVARDS").gameObject.GetComponent<MeshRenderer>();
-                    guards_mat = gvards_mr.material;
-                    if (guards_mat == null) { MelonLogger.Msg("Can't retrieve guards material from prefab"); }
-                    else { if (!mute_logging.Value) { MelonLogger.Msg("Got material from prefab"); } }                    
+                    if (unit.FriendlyName != "BMP-2") { continue; }
+                    unit.PrefabReference.LoadAssetAsync<GameObject>().WaitForCompletion();
+                    if (!mute_logging.Value) { MelonLogger.Msg("BMP-2 prefab loaded"); }
                 }
-            }            
-
+            
+                var list = Resources.FindObjectsOfTypeAll<Vehicle>();
+                foreach (var vic in list)
+                {
+                    if (vic.name == "BMP2 Soviet")
+                    {
+                        MeshRenderer gvards_mr = vic.transform.Find("BMP2_markings_sa/GVARDS").gameObject.GetComponent<MeshRenderer>();
+                        guards_mat = gvards_mr.material;
+                        if (guards_mat == null) { MelonLogger.Msg("Can't retrieve guards material from prefab"); }
+                        else { if (!mute_logging.Value) { MelonLogger.Msg("Got material from prefab"); } }                    
+                    }
+                }
+            }
             //since the prop vehicles in the scene have no 'Vehicle' component, and the BTR70 is not even tagged 'vehicle',
             //we fetch all the gameobjects in a big-ass array and filter them by their names
             GameObject[] props = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
@@ -200,9 +203,9 @@ namespace SovietGuards{
                 }
             }
         }
+        
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
-            guards_mat = null;
             if (sceneName == "MainMenu2_Scene" || sceneName == "t64_menu" || sceneName == "MainMenu2-1_Scene")
             {
                 menuProps = true;
@@ -215,11 +218,13 @@ namespace SovietGuards{
 
             StateController.RunOrDefer(GameState.GameReady, new GameStateEventHandler(Conversion), GameStatePriority.Medium);
         }
+       
         private IEnumerator Conversion(GameState _)
         {
             if (menuProps == true) { yield break; }                       
             Vehicle[] list = GameObject.FindObjectsByType<Vehicle>(FindObjectsSortMode.None);
 
+            
             foreach (var unit in list)
             {
                 GameObject unit_go = unit.gameObject;
@@ -230,7 +235,7 @@ namespace SovietGuards{
                 GameObject gvards = unit_go.transform.Find("BMP2_markings_sa/GVARDS").gameObject;
                 if (gvards != null)
                 {
-                    guards_mat = gvards.GetComponent<MeshRenderer>().material; //ref for Guard badge texture
+                    if (guards_mat == null) { guards_mat = gvards.GetComponent<MeshRenderer>().material; } //ref for Guard badge texture
                     gvards.transform.localScale = new Vector3(1.005f, 1f, 1f); //slight resize prevents clipping
                     if (BMP2.Value) 
                     { 
@@ -249,7 +254,7 @@ namespace SovietGuards{
             }
 
             if (guards_mat == null) { //if there's no BMP-2 in the scene, we create one and take its Guard badge
-                var prefabLookups = UnityEngine.Object.FindAnyObjectByType<UnitSpawner>().PrefabLookup;
+                var prefabLookups = Object.FindAnyObjectByType<UnitSpawner>().PrefabLookup;
                 AssetReference prefab = prefabLookups.GetPrefab("BMP2_SA");
                 var dummy_bmp = Addressables.LoadAssetAsync<GameObject>(prefab).WaitForCompletion();
                 MelonLogger.Msg(dummy_bmp.name + "vehicle object");
