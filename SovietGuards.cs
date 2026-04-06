@@ -1,7 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.SceneManagement;
 using MelonLoader;
 using GHPC;
 using GHPC.Mission;
@@ -65,6 +64,20 @@ namespace SovietGuards{
             Infantry = cfg.CreateEntry<bool>("Modify Infantry", true);
             Infantry.Description = "Set true to modify infantrymen, false to exclude them";            
         }        
+        
+        public void NewQuad(GameObject go, Material mat)
+        {
+            MeshFilter filter = go.AddComponent<MeshFilter>();
+            MeshRenderer render = go.AddComponent<MeshRenderer>();
+            filter.mesh = new Mesh();
+            filter.mesh.vertices = new Vector3[] {
+                            new Vector3(1f, 0 , 1f), new Vector3(1f, 0, -1f), new Vector3(-1f, 0, 1f), new Vector3(-1f, 0, -1f) };
+            filter.mesh.uv = new Vector2[] {
+                            new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0) };
+            filter.mesh.triangles = new int[] { 0, 1, 2, 2, 1, 3 };
+            filter.mesh.RecalculateNormals();
+            render.material = mat;
+        }
         public void MenuProps()
         {
             //Since there is no unitspawner on the main menu scenes, we need to load in our dummy BMP the hard way
@@ -80,41 +93,16 @@ namespace SovietGuards{
             }
             
             var list = Resources.FindObjectsOfTypeAll<Vehicle>();
-            foreach (var thing in list)
+            foreach (var vic in list)
             {
-                if (thing.name == "BMP2 Soviet")
+                if (vic.name == "BMP2 Soviet")
                 {
-                    GameObject thing_go = thing.gameObject;
-                    thing.Allegiance = Faction.Neutral;
-                    string current_scene = SceneManager.GetActiveScene().name; //We don't want to instantiate the BMP into 'LOAD_INITIAL'!
-                    int scenes = SceneManager.sceneCount;                                                
-                    string[] sceneNames = new string[scenes]; //trying to pass sceneName from 'OnSceneWasLoaded' after quitting a   
-                    string target = null;                     //mission back to menu was creating race conditions(?) and null reference
-                    for (int i = 0; i < scenes; i++)          //so we find the scene's name from here
-                    {
-                        sceneNames[i] = SceneManager.GetSceneAt(i).name;                        
-                        if (sceneNames[i] == "MainMenu2_Scene" || sceneNames[i] == "t64_menu" || sceneNames[i] == "MainMenu2-1_Scene")
-                        { target = sceneNames[i]; }
-                    }
-                    if (current_scene != target) { SceneManager.SetActiveScene(SceneManager.GetSceneByName(target)); }
-                    GameObject.Instantiate(thing_go, new Vector3(100f, 200f, 100f), new Quaternion(0f, 0f, 0f, 0f));
-                    if (!mute_logging.Value) { MelonLogger.Msg("created a dummy"); }
-                    SceneManager.SetActiveScene(SceneManager.GetSceneByName("LOADER_INITIAL"));
-                    break;
+                    MeshRenderer gvards_mr = vic.transform.Find("BMP2_markings_sa/GVARDS").gameObject.GetComponent<MeshRenderer>();
+                    guards_mat = gvards_mr.material;
+                    if (guards_mat == null) { MelonLogger.Msg("Can't retrieve guards material from prefab"); }
+                    else { if (!mute_logging.Value) { MelonLogger.Msg("Got material from prefab"); } }                    
                 }
-            }
-
-            Vehicle[] vics = GameObject.FindObjectsByType<Vehicle>(FindObjectsSortMode.None);
-            foreach (var vic in vics)
-            {                
-                if (vic.UniqueName != "BMP2_SA") { continue; }                
-                vic.transform.Find("BMP2_markings_sa/GVARDS").gameObject.SetActive(true);
-                Transform guards_t = vic.transform.Find("BMP2_rig/HULL/TURRET/GVARDS");
-                guards_mat = guards_t.GetComponent<MeshRenderer>().material;
-                if (!mute_logging.Value) { MelonLogger.Msg("Got " + guards_mat + "from dummy"); }
-                vic.gameObject.SetActive(false);
-                if (!mute_logging.Value) { MelonLogger.Msg("Removing Dummy"); }
-            }
+            }            
 
             //since the prop vehicles in the scene have no 'Vehicle' component, and the BTR70 is not even tagged 'vehicle',
             //we fetch all the gameobjects in a big-ass array and filter them by their names
@@ -167,6 +155,7 @@ namespace SovietGuards{
                         if (!BMP2.Value) { continue; }
                         prop.transform.Find("BMP2_markings_sa/GVARDS").gameObject.SetActive(true);
                         prop.transform.Find("BMP2_rig/HULL/TURRET/tactical marker").gameObject.SetActive(false);
+                        prop.transform.Find("BMP2_rig/HULL/TURRET/GVARDS").localScale = new Vector3(1.005f, 1f, 1f);
                         if (hide_nets.Value)
                         {
                             GameObject net = prop.transform.Find("BMP2_rig/HULL/TURRET/bmp2 net turret").gameObject;
@@ -191,36 +180,20 @@ namespace SovietGuards{
                         if (!BTR70.Value) { continue; }
                         GameObject turret = prop.transform.Find("BTR70_rig/HULL/TURRET").gameObject;
                         GameObject guard_left = new GameObject("Guards_left");
-                        guard_left.transform.parent = turret.transform;
-                        guard_left.AddComponent<MeshFilter>();
-                        guard_left.AddComponent<MeshRenderer>();
-                        guard_left.GetComponent<MeshFilter>().mesh = new Mesh();
-                        guard_left.GetComponent<MeshFilter>().mesh.vertices = new Vector3[] {
-                            new Vector3(0.15f, 0 , 0.15f), new Vector3(0.15f, 0, -0.15f), new Vector3(-0.15f, 0, 0.15f), new Vector3(-0.15f, 0, -0.15f) };
-                        guard_left.GetComponent<MeshFilter>().mesh.uv = new Vector2[] {
-                            new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0) };
-                        guard_left.GetComponent<MeshFilter>().mesh.triangles = new int[] { 0, 1, 2, 2, 1, 3 };
-                        guard_left.GetComponent<MeshRenderer>().material = guards_mat;
+                        guard_left.transform.parent = turret.transform;                        
                         guard_left.transform.position = turret.transform.position;
+                        NewQuad(guard_left, guards_mat);
+                        guard_left.transform.localScale = new Vector3(14f, 14f, 14f);
                         guard_left.transform.localPosition += new Vector3(-56.55f, 5.0f, -14.0f);
-                        guard_left.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, 70.0f, 5.1f));
-                        guard_left.GetComponent<MeshFilter>().mesh.RecalculateNormals();
+                        guard_left.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, 70.0f, 5.1f));                        
 
                         GameObject guard_right = new GameObject("Guards_right");
-                        guard_right.transform.parent = turret.transform;
-                        guard_right.AddComponent<MeshFilter>();
-                        guard_right.AddComponent<MeshRenderer>();
-                        guard_right.GetComponent<MeshFilter>().mesh = new Mesh();
-                        guard_right.GetComponent<MeshFilter>().mesh.vertices = new Vector3[] {
-                            new Vector3(0.15f, 0 , 0.15f), new Vector3(0.15f, 0, -0.15f), new Vector3(-0.15f, 0, 0.15f), new Vector3(-0.15f, 0, -0.15f) };
-                        guard_right.GetComponent<MeshFilter>().mesh.uv = new Vector2[] {
-                            new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0) };
-                        guard_right.GetComponent<MeshFilter>().mesh.triangles = new int[] { 0, 1, 2, 2, 1, 3 };
-                        guard_right.GetComponent<MeshRenderer>().material = guards_mat;
+                        guard_right.transform.parent = turret.transform;                        
                         guard_right.transform.position = turret.transform.position;
+                        NewQuad(guard_right, guards_mat);
+                        guard_right.transform.localScale = new Vector3(14f, 14f, 14f);
                         guard_right.transform.localPosition += new Vector3(57.55f, 5.0f, -14.0f);
-                        guard_right.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, -90.0f, 5.1f));
-                        guard_right.GetComponent<MeshFilter>().mesh.RecalculateNormals();
+                        guard_right.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, -90.0f, 5.1f));                        
 
                         if (!mute_logging.Value) { MelonLogger.Msg("BTR70 prop inducted into the Guards!"); }
                         break;
@@ -257,15 +230,16 @@ namespace SovietGuards{
                 GameObject gvards = unit_go.transform.Find("BMP2_markings_sa/GVARDS").gameObject;
                 if (gvards != null)
                 {
-                    gvards.SetActive(true); //switches on BMP2's Guard badge
-
-                    Transform guards_t = unit.transform.Find("BMP2_rig/HULL/TURRET/GVARDS");
-                    guards_mat = guards_t.GetComponent<MeshRenderer>().material; //gets ref for later
-                    if (!mute_logging.Value) { MelonLogger.Msg("Found BMP-2 named " + unit + " and its guard badge: " + guards_mat); }
-                    if (!BMP2.Value) { gvards.SetActive(false); } 
-                    else { 
+                    guards_mat = gvards.GetComponent<MeshRenderer>().material; //ref for Guard badge texture
+                    gvards.transform.localScale = new Vector3(1.005f, 1f, 1f); //slight resize prevents clipping
+                    if (BMP2.Value) 
+                    { 
+                        gvards.SetActive(true);
                         unit.transform.Find("BMP2_rig/HULL/TURRET/tactical marker").gameObject.SetActive(false);
-                    }
+                    } //switches on BMP2's Guard badge
+                    
+                    if (!mute_logging.Value) { MelonLogger.Msg("Found BMP-2 named " + unit + " and its guard badge: " + guards_mat); }
+                    
                     if (hide_nets.Value) { 
                         GameObject net = unit.transform.Find("BMP2_rig/HULL/TURRET/bmp2 net turret").gameObject;
                         if (net != null) { net.SetActive(false); }
@@ -278,28 +252,17 @@ namespace SovietGuards{
                 var prefabLookups = UnityEngine.Object.FindAnyObjectByType<UnitSpawner>().PrefabLookup;
                 AssetReference prefab = prefabLookups.GetPrefab("BMP2_SA");
                 var dummy_bmp = Addressables.LoadAssetAsync<GameObject>(prefab).WaitForCompletion();
+                MelonLogger.Msg(dummy_bmp.name + "vehicle object");
+
                 if (dummy_bmp == null) {                     
                     if (!mute_logging.Value) { MelonLogger.Msg("Could not load a BMP-2 prefab!"); }
                 }
-                else { 
-                    Vehicle dummy_bmp_vic = dummy_bmp.GetComponent<Vehicle>();
-                    dummy_bmp_vic.Allegiance = Faction.Neutral;  //Neutral dummy hopefully won't foul-up any missions
-                    GameObject.Instantiate(dummy_bmp, new Vector3(100f, 5f, 100f), new Quaternion(0f, 0f, 0f, 0f));
-                    if (!mute_logging.Value) { MelonLogger.Msg("Dummy BMP-2 spawned..."); }
-
-                    list = GameObject.FindObjectsByType<Vehicle>(FindObjectsSortMode.None);
-                    foreach (var unit in list)
-                    {
-                        if (unit.gameObject.name == "BMP2 Soviet(Clone)")
-                        {
-                            unit.transform.Find("BMP2_markings_sa/GVARDS").gameObject.SetActive(true); 
-                            Transform guards_t = unit.transform.Find("BMP2_rig/HULL/TURRET/GVARDS");
-                            guards_mat = guards_t.GetComponent<MeshRenderer>().material;
-                            if (!mute_logging.Value) { MelonLogger.Msg("Got " + guards_mat + "from dummy"); }
-                            unit.gameObject.SetActive(false);
-                            if (!mute_logging.Value) { MelonLogger.Msg("Removing Dummy"); }
-                        }
-                    } 
+                else {
+                    MelonLogger.Msg(dummy_bmp);                    
+                    MeshRenderer gvards_mr = dummy_bmp.transform.Find("BMP2_markings_sa/GVARDS").gameObject.GetComponent<MeshRenderer>();
+                    guards_mat = gvards_mr.material;
+                    if (guards_mat == null) { MelonLogger.Msg("Can't retrieve guards material from dummy"); }
+                    else { if (!mute_logging.Value) { MelonLogger.Msg("Got " + guards_mat + "from dummy"); } } 
                 }
             }
                 
@@ -399,36 +362,20 @@ namespace SovietGuards{
                         GameObject turret;
                         turret = unit.transform.Find("BTR70_rig/HULL/TURRET").gameObject;  
                         GameObject guard_left = new GameObject("Guards_left");
-                        guard_left.transform.parent = turret.transform;
-                        guard_left.AddComponent<MeshFilter>();
-                        guard_left.AddComponent<MeshRenderer>();
-                        guard_left.GetComponent<MeshFilter>().mesh = new Mesh();
-                        guard_left.GetComponent<MeshFilter>().mesh.vertices = new Vector3[] {
-                            new Vector3(0.15f, 0 , 0.15f), new Vector3(0.15f, 0, -0.15f), new Vector3(-0.15f, 0, 0.15f), new Vector3(-0.15f, 0, -0.15f) };
-                        guard_left.GetComponent<MeshFilter>().mesh.uv = new Vector2[] { 
-                            new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0) };
-                        guard_left.GetComponent<MeshFilter>().mesh.triangles = new int[] { 0, 1, 2, 2, 1, 3 };                        
-                        guard_left.GetComponent<MeshRenderer>().material = guards_mat;
-                        guard_left.transform.position = turret.transform.position;                        
+                        guard_left.transform.parent = turret.transform;                        
+                        guard_left.transform.position = turret.transform.position;
+                        NewQuad(guard_left, guards_mat);
+                        guard_left.transform.localScale = new Vector3(14f, 14f, 14f);
                         guard_left.transform.localPosition += new Vector3(-56.55f, 5.0f, -14.0f);
-                        guard_left.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, 70.0f, 5.1f));                       
-                        guard_left.GetComponent<MeshFilter>().mesh.RecalculateNormals();
+                        guard_left.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, 70.0f, 5.1f)); 
 
                         GameObject guard_right = new GameObject("Guards_right");
-                        guard_right.transform.parent = turret.transform;
-                        guard_right.AddComponent<MeshFilter>();
-                        guard_right.AddComponent<MeshRenderer>();
-                        guard_right.GetComponent<MeshFilter>().mesh = new Mesh();
-                        guard_right.GetComponent<MeshFilter>().mesh.vertices = new Vector3[] {
-                            new Vector3(0.15f, 0 , 0.15f), new Vector3(0.15f, 0, -0.15f), new Vector3(-0.15f, 0, 0.15f), new Vector3(-0.15f, 0, -0.15f) };
-                        guard_right.GetComponent<MeshFilter>().mesh.uv = new Vector2[] {
-                            new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0) };
-                        guard_right.GetComponent<MeshFilter>().mesh.triangles = new int[] { 0, 1, 2, 2, 1, 3 };
-                        guard_right.GetComponent<MeshRenderer>().material = guards_mat;
-                        guard_right.transform.position = turret.transform.position;                        
+                        guard_right.transform.parent = turret.transform;                        
+                        guard_right.transform.position = turret.transform.position;
+                        NewQuad(guard_right, guards_mat);
+                        guard_right.transform.localScale = new Vector3(14f, 14f, 14f);
                         guard_right.transform.localPosition += new Vector3(57.55f, 5.0f, -14.0f);
-                        guard_right.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, -90.0f, 5.1f));                        
-                        guard_right.GetComponent<MeshFilter>().mesh.RecalculateNormals();
+                        guard_right.transform.rotation = turret.transform.rotation * Quaternion.Euler(new Vector3(309.0f, -90.0f, 5.1f)); 
 
                         if (!mute_logging.Value) { MelonLogger.Msg("BTR-70 named " + unit + "inducted into the Guards!"); }
                         unit_go.AddComponent<AlreadyConverted>();
@@ -468,21 +415,12 @@ namespace SovietGuards{
                         if (bone.name == "soldierChest") { chest = bone; }                        
                     }                    
                     GameObject guard = new GameObject("Guards_badge");
-                    guard.transform.parent = chest;
-                    guard.AddComponent<MeshRenderer>();
-                    guard.AddComponent<MeshFilter>();
-
-                    guard.GetComponent<MeshFilter>().mesh.vertices = new Vector3[] {
-                            new Vector3(0.023f, 0 , 0.023f), new Vector3(0.023f, 0, -0.023f), 
-                            new Vector3(-0.023f, 0, 0.023f), new Vector3(-0.023f, 0, -0.023f) };
-                    guard.GetComponent<MeshFilter>().mesh.uv = new Vector2[] {
-                            new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0) };
-                    guard.GetComponent<MeshFilter>().mesh.triangles = new int[] { 0, 1, 2, 2, 1, 3 };                    
-                    guard.GetComponent<MeshRenderer>().material = guards_mat;
+                    guard.transform.parent = chest;                    
                     guard.transform.position = chest.transform.position;
+                    NewQuad(guard, guards_mat);
+                    guard.transform.localScale = new Vector3(0.023f, 0.023f, 0.023f);
                     guard.transform.localPosition += new Vector3(-0.03f, 0.13f, -0.07f);
-                    guard.transform.rotation = chest.transform.rotation * Quaternion.Euler(new Vector3(20f, -90f, 5f));                    
-                    guard.GetComponent<MeshFilter>().mesh.RecalculateNormals();
+                    guard.transform.rotation = chest.transform.rotation * Quaternion.Euler(new Vector3(20f, -90f, 5f));
                     if (!mute_logging.Value) { MelonLogger.Msg("Motostrelok inducted into the Guards!"); }
                     unit_go.AddComponent<AlreadyConverted>();
                 }
