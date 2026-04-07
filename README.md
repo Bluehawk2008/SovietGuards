@@ -24,8 +24,8 @@ This mod does NOT require the Vehicle Preloader or Texture Loader.
 To install, simply extract the "SovietGuards.dll" file into your /mods/ folder.
 
 ***Acknowledgements***  
-This mod does not copy or incorporate any material wholesale from other modders, but were it not for the availability of the source code written by ATLAS, aka thebeninator on github, and Andrix(44), this project
-would never have come to fruition. I owe them, and the geniuses behind the UnityExplorer project a debt of gratitude.
+This mod does not copy or incorporate any material wholesale from other modders, but were it not for the availability of the source code written by [ATLAS](https://github.com/thebeninator) and [Andrix44](https://github.com/Andrix44/), this project
+would never have come to fruition. I owe them, and the geniuses behind the [UnityExplorer](https://github.com/sinai-dev/UnityExplorer) project a debt of gratitude.
 
 ***Known Issues***  
 - The emblems don't disappear or darken after a vehicle has blown up and burnt down to a rusty hulk.  
