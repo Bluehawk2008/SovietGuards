@@ -59,7 +59,7 @@ namespace SovietGuards{
             BTR60 = cfg.CreateEntry<bool>("Modify BTR60s", true);
             BTR60.Description = "Set true to modify BTR60s, false to exclude them";
             BTR70 = cfg.CreateEntry<bool>("Modify BTR70s", true);
-            BTR70.Description = "Set true to modify BRDMs, false to exclude them";
+            BTR70.Description = "Set true to modify BTR70s, false to exclude them";
             BRDM = cfg.CreateEntry<bool>("Modify BRDMs", true);
             BRDM.Description = "Set true to modify BRDMs, false to exclude them";
             Infantry = cfg.CreateEntry<bool>("Modify Infantry", true);
