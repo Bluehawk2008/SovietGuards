@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using MelonLoader;
 using SovietGuards;
 
-[assembly: MelonInfo(typeof(SovietGuardsClass), "SovietGuards", "1.2.0", "Bluehawk")]
+[assembly: MelonInfo(typeof(SovietGuardsClass), "SovietGuards", "1.2.1", "Bluehawk")]
 [assembly: MelonGame("Radian Simulations LLC", "GHPC")]
 
 // General Information about an assembly is controlled through the following
