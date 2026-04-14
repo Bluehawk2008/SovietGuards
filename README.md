@@ -1,7 +1,7 @@
 
 ## Gunner Heat PC Soviet Guards Regiment Mod
 
-### Version 1.3, 6th April 2026  
+### Version 1.3.1, 9th April 2026  
 
 ![T-80B's on the march](https://i.imgur.com/tTsuTcz.jpeg)
  
@@ -37,5 +37,6 @@ would never have come to fruition. I owe them, and the geniuses behind the [Unit
 1.1 - T64B1 added  
 1.2 - T64R and BRDM2 added; configuration options added  
 1.3 - Refactored code, no significant change to user experience  
+1.3.1 - Minor Typo in Config
 
 ![Motor-Rifle Section dismounting from a BMP-1](https://i.imgur.com/b3hF4Q3.jpeg)
